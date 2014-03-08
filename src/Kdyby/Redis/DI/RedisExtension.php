@@ -26,6 +26,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 
 	const DEFAULT_SESSION_PREFIX = Kdyby\Redis\RedisSessionHandler::NS_NETTE;
 	const PANEL_COUNT_MODE = 'count';
+	const TAG_SHARD = 'kdyby.redis.shard';
 
 	/**
 	 * @var array
@@ -85,6 +86,13 @@ class RedisExtension extends Nette\DI\CompilerExtension
 
 
 
+	private static function isSharded(array $config)
+	{
+		return !empty($config['shards']) || !empty($config['remoteShards']);
+	}
+
+
+
 	/**
 	 * @param string $name
 	 * @param array $config
@@ -92,8 +100,65 @@ class RedisExtension extends Nette\DI\CompilerExtension
 	 */
 	protected function buildClient($name, $config)
 	{
+		$name = ($name ? $name . '_' : '') . 'client';
+		if (!self::isSharded($config)) {
+			return $this->registerClient($config, $name);
+		}
+
+		$builder = $this->getContainerBuilder();
+		$defaults = array_intersect_key(Config\Helpers::merge($config, $this->connectionDefaults), $this->connectionDefaults);
+
+		$localeShards = array();
+		foreach ($config['shards'] as $clientConfig) {
+			$localeShards[] = $this->registerShard($clientConfig, $defaults, $name);
+		}
+
+		$remoteShards = array();
+		foreach ($config['remoteShards'] as $clientConfig) {
+			$remoteShards[] = $this->registerShard($clientConfig, $defaults, $name);
+		}
+
+		$builder->addDefinition($this->prefix('clientPool'))
+			->setClass('Kdyby\Redis\ClientsPool', array($localeShards, $remoteShards));
+
+		return $builder->addDefinition($this->prefix('client'))
+			->setClass('Kdyby\Redis\RedisClient')
+			->setFactory(reset($localeShards));
+	}
+
+
+
+	/**
+	 * @param int|array $clientConfig
+	 * @param array $defaults
+	 * @param string $name
+	 * @return string
+	 */
+	protected function registerShard($clientConfig, array $defaults, $name)
+	{
 		$builder = $this->getContainerBuilder();
 
+		$clientConfig = is_numeric($clientConfig) ? array('port' => $clientConfig) : $clientConfig;
+		$clientConfig = Config\Helpers::merge($clientConfig, $defaults);
+
+		$clientName = $name . '_' . substr(md5(serialize($clientConfig)), 0, 6);
+		$client = $this->registerClient($clientConfig, $clientName);
+		$client
+			->setAutowired(FALSE)
+			->addTag(self::TAG_SHARD);
+
+		return $this->prefix('@' . $clientName);
+	}
+
+
+
+	/**
+	 * @param array $config
+	 * @param string $name
+	 * @return Nette\DI\ServiceDefinition
+	 */
+	protected function registerClient(array $config, $name)
+	{
 		$defaultConfig = $this->getConfig($this->clientDefaults);
 		if ($parentName = Config\Helpers::takeParent($config)) {
 			Nette\Utils\Validators::assertField($this->configuredClients, $parentName, 'array', "parent configuration '%', are you sure it's defined?");
@@ -103,7 +168,8 @@ class RedisExtension extends Nette\DI\CompilerExtension
 		$config = Config\Helpers::merge($config, $defaultConfig);
 		$config = array_intersect_key(self::fixClientConfig($config), $this->clientDefaults);
 
-		$client = $builder->addDefinition($clientName = $this->prefix(($name ? $name . '_' : '') . 'client'))
+		$builder = $this->getContainerBuilder();
+		$client = $builder->addDefinition($clientName = $this->prefix($name))
 			->setClass('Kdyby\Redis\RedisClient', [
 				'host' => $config['host'],
 				'port' => $config['port'],
@@ -161,7 +227,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 		$builder->addDefinition($journalService)->setFactory($this->prefix('@cacheJournal'));
 
 		$builder->addDefinition($this->prefix('cacheJournal'))
-			->setClass('Kdyby\Redis\RedisLuaJournal');
+			->setClass(self::isSharded($config) ? 'Kdyby\Redis\JournalRouter' : 'Kdyby\Redis\RedisLuaJournal');
 	}
 
 
@@ -183,7 +249,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 		$builder->addDefinition($storageService)->setFactory($this->prefix('@cacheStorage'));
 
 		$cacheStorage = $builder->addDefinition($this->prefix('cacheStorage'))
-			->setClass('Kdyby\Redis\RedisStorage');
+			->setClass(self::isSharded($config) ? 'Kdyby\Redis\StorageRouter' : 'Kdyby\Redis\RedisStorage');
 
 		if (!$storageConfig['locks']) {
 			$cacheStorage->addSetup('disableLocking');
@@ -260,7 +326,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 
 		foreach ($builder->getDefinition('session')->setup as $statement) {
 			if ($statement->entity === 'setOptions') {
-				$statement->arguments[0] = Nette\DI\Config\Helpers::merge($options, $statement->arguments[0]);
+				$statement->arguments[0] = Config\Helpers::merge($options, $statement->arguments[0]);
 				unset($options);
 				break;
 			}
