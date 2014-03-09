@@ -100,12 +100,16 @@ class RedisExtension extends Nette\DI\CompilerExtension
 	 */
 	protected function buildClient($name, $config)
 	{
+		$builder = $this->getContainerBuilder();
+
 		$name = ($name ? $name . '_' : '') . 'client';
 		if (!self::isSharded($config)) {
-			return $this->registerClient($config, $name);
+			$this->registerClient($config, $name);
+
+			return $builder->addDefinition($this->prefix('clientPool'))
+				->setClass('Kdyby\Redis\ClientsPool', array(array($this->prefix('@' . $name)), array($this->prefix('@' . $name))));
 		}
 
-		$builder = $this->getContainerBuilder();
 		$defaults = array_intersect_key(Config\Helpers::merge($config, $this->connectionDefaults), $this->connectionDefaults);
 
 		$localeShards = array();
