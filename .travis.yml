@@ -51,12 +51,12 @@ addons:
       - redis-server
 
 install:
+  - sudo -u redis tests/redis-conf/start.sh
   - travis_retry composer update --no-interaction --prefer-dist $COMPOSER_EXTRA_ARGS
   - travis_retry composer create-project --no-interaction jakub-onderka/php-parallel-lint /tmp/php-parallel-lint
   - travis_retry composer create-project --no-interaction kdyby/code-checker /tmp/code-checker
   - travis_retry wget -O /tmp/coveralls.phar https://github.com/satooshi/php-coveralls/releases/download/v1.0.1/coveralls.phar
   - tests/travis.phpredis.sh
-  - sudo -u redis tests/redis-conf/start.sh
   - redis-cli info |grep version
 
 script:
