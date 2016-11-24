@@ -67,29 +67,56 @@ class StorageRouter extends RedisStorage
 
 	public function clean(array $conditions)
 	{
-		// cleaning using file iterator
-		if ( ! empty($conditions[Nette\Caching\Cache::ALL])) {
+		$journal = $this->journal;
+		$this->journal = $this->createCleanJournal();
+		try {
 			foreach ($this->clients as $client) {
-				if ($keys = $client->send('keys', array(self::NS_NETTE . ':*'))) {
-					$client->send('del', $keys);
-				}
+				$this->client = $client;
+				parent::clean($conditions);
 			}
-
-			if ($this->journal) {
-				$this->journal->clean($conditions);
-			}
-
-			return;
+		} finally {
+			$this->journal = $journal;
 		}
+	}
 
-		// cleaning using journal
-		if ($this->journal) {
-			if ($keys = $this->journal->clean($conditions, $this)) {
-				foreach ($this->clients as $client) {
-					$client->send('del', $keys);
-				}
+
+	private function createCleanJournal()
+	{
+		return new class($this->journal) implements Nette\Caching\Storages\IJournal
+		{
+
+			/**
+			 * @var Nette\Caching\Storages\IJournal
+			 */
+			private $journal;
+			/**
+			 * @var bool
+			 */
+			private $result = FALSE;
+
+
+			public function __construct(Nette\Caching\Storages\IJournal $journal = NULL)
+			{
+				$this->journal = $journal;
 			}
-		}
+
+
+			public function write($key, array $dependencies)
+			{
+				throw new Nette\NotImplementedException;
+			}
+
+
+			public function clean(array $conditions)
+			{
+				if ($this->journal && $this->result === FALSE) {
+					$this->result = $this->journal->clean(...func_get_args());
+				}
+
+				return $this->result;
+			}
+
+		};
 	}
 
 }
