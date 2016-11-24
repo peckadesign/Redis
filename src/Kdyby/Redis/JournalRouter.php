@@ -18,7 +18,7 @@ use Nette;
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class JournalRouter extends RedisLuaJournal
+class JournalRouter extends RedisJournal
 {
 
 	/**
@@ -48,7 +48,7 @@ class JournalRouter extends RedisLuaJournal
 		$result = array();
 		foreach ($this->clients as $client) {
 			$this->client = $client;
-			$result = array_merge($result, parent::clean($conditions, $storage));
+			$result = array_merge($result, (array) parent::clean($conditions, $storage));
 		}
 
 		return $result;

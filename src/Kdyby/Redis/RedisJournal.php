@@ -14,7 +14,6 @@ use Nette;
 use Nette\Caching\Cache;
 
 
-
 /**
  * Redis journal for tags and priorities of cached values.
  *
@@ -115,10 +114,14 @@ class RedisJournal extends Nette\Object implements Nette\Caching\Storages\IJourn
 	{
 		if (!empty($conds[Cache::ALL])) {
 			$all = $this->client->keys(self::NS_NETTE . ':*');
+			if ( ! $all) {
+				return NULL;
+			}
 
 			$this->client->multi();
 			call_user_func_array([$this->client, 'del'], $all);
 			$this->client->exec();
+
 			return NULL;
 		}
 

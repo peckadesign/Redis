@@ -14,7 +14,6 @@ use Kdyby;
 use Nette;
 
 
-
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
@@ -66,12 +65,30 @@ class StorageRouter extends RedisStorage
 	}
 
 
-
 	public function clean(array $conditions)
 	{
-		foreach ($this->clients as $client) {
-			$this->client = $client;
-			parent::clean($conditions);
+		// cleaning using file iterator
+		if ( ! empty($conditions[Nette\Caching\Cache::ALL])) {
+			foreach ($this->clients as $client) {
+				if ($keys = $client->send('keys', array(self::NS_NETTE . ':*'))) {
+					$client->send('del', $keys);
+				}
+			}
+
+			if ($this->journal) {
+				$this->journal->clean($conditions);
+			}
+
+			return;
+		}
+
+		// cleaning using journal
+		if ($this->journal) {
+			if ($keys = $this->journal->clean($conditions, $this)) {
+				foreach ($this->clients as $client) {
+					$client->send('del', $keys);
+				}
+			}
 		}
 	}
 
