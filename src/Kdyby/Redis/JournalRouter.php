@@ -18,7 +18,7 @@ use Nette;
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class JournalRouter extends RedisJournal
+class JournalRouter extends RedisLuaJournal
 {
 
 	/**

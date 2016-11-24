@@ -15,7 +15,6 @@ use Nette;
 use Nette\Caching\Cache;
 
 
-
 /**
  * Redis journal for tags and priorities of cached values.
  *
@@ -43,7 +42,7 @@ class RedisLuaJournal extends RedisJournal implements Nette\Caching\Storages\IJo
 	 */
 	public function clean(array $conds, Nette\Caching\IStorage $storage = NULL)
 	{
-		if ($storage instanceof RedisStorage) {
+		if ($storage instanceof RedisStorage && ! $storage instanceof StorageRouter) {
 			$conds[self::DELETE_ENTRIES] = '1';
 		}
 
@@ -54,7 +53,7 @@ class RedisLuaJournal extends RedisJournal implements Nette\Caching\Storages\IJo
 			throw new RedisClientException("Failed to successfully execute lua script journal.clean(): " . $this->client->getDriver()->getLastError());
 		}
 
-		if ($storage instanceof RedisStorage) {
+		if ($storage instanceof RedisStorage && ! $storage instanceof StorageRouter) {
 			return [];
 		}
 
