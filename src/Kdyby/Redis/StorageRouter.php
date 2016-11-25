@@ -26,7 +26,6 @@ class StorageRouter extends RedisStorage
 	private $clients;
 
 
-
 	public function __construct(ClientsPool $clients, JournalRouter $journal = NULL)
 	{
 		$this->clients = $clients;
@@ -37,9 +36,9 @@ class StorageRouter extends RedisStorage
 	public function read($key)
 	{
 		$this->client = $this->clients->choose($key);
+
 		return parent::read($key);
 	}
-
 
 
 	public function lock($key)
@@ -49,7 +48,6 @@ class StorageRouter extends RedisStorage
 	}
 
 
-
 	public function write($key, $data, array $dependencies)
 	{
 		$this->client = $this->clients->choose($key);
@@ -57,10 +55,10 @@ class StorageRouter extends RedisStorage
 	}
 
 
-
 	public function remove($key)
 	{
 		$this->client = $this->clients->choose($key);
+
 		return parent::remove($key);
 	}
 
@@ -109,8 +107,8 @@ class StorageRouter extends RedisStorage
 
 			public function clean(array $conditions)
 			{
-				if ($this->journal && $this->result === FALSE) {
-					$this->result = $this->journal->clean(...func_get_args());
+				if ($this->result === FALSE) {
+					$this->result = $this->journal ? $this->journal->clean(...func_get_args()) : NULL;
 				}
 
 				return $this->result;
