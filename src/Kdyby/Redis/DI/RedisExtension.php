@@ -42,6 +42,8 @@ class RedisExtension extends Nette\DI\CompilerExtension
 	 * @var array
 	 */
 	public $clientDefaults = [
+		'shards' => array(),
+		'remoteShards' => array(),
 		'host' => '127.0.0.1',
 		'port' => NULL,
 		'timeout' => 10,
@@ -110,7 +112,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 				->setClass('Kdyby\Redis\ClientsPool', array(array($this->prefix('@' . $name)), array($this->prefix('@' . $name))));
 		}
 
-		$defaults = array_intersect_key(Config\Helpers::merge($config, $this->connectionDefaults), $this->connectionDefaults);
+		$defaults = array_intersect_key(Config\Helpers::merge($config, $this->clientDefaults), $this->clientDefaults);
 
 		$localeShards = array();
 		foreach ($config['shards'] as $clientConfig) {
