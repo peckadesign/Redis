@@ -379,12 +379,17 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 		if (empty($stored[0][self::META_SERIALIZED])) {
 			return $stored[1];
 
-		} else {
-			$result = @unserialize($stored[1]); // intentionally @
-			if ($result === FALSE && $stored[1] !== serialize(FALSE)) {
+		}
+		try {
+			$value = @unserialize($stored[1]); // intentionally @
+			if ($value === FALSE && $stored[1] !== serialize(FALSE)) {
 				return NULL;
 			}
-			return $result;
+			return $value;
+		} catch (\Throwable $e) {
+			return NULL;
+		} catch (\Exception $e) {
+			return NULL;
 		}
 	}
 
