@@ -70,6 +70,7 @@ class StorageRouter extends RedisStorage
 		try {
 			foreach ($this->clients as $client) {
 				$this->client = $client;
+				$this->journal->setClient($client);
 				parent::clean($conditions);
 			}
 		} finally {
@@ -80,7 +81,7 @@ class StorageRouter extends RedisStorage
 
 	private function createCleanJournal()
 	{
-		return new class($this->journal) implements Nette\Caching\Storages\IJournal
+		return new class($this->journal, $this->clients) implements Nette\Caching\Storages\IJournal
 		{
 
 			/**
@@ -88,14 +89,27 @@ class StorageRouter extends RedisStorage
 			 */
 			private $journal;
 			/**
+			 * @var ClientsPool
+			 */
+			private $clients;
+			/**
+			 * @var RedisClient
+			 */
+			private $client;
+			/**
 			 * @var bool
 			 */
 			private $result = FALSE;
+			/**
+			 * @var array
+			 */
+			private $clientsResult = [];
 
 
-			public function __construct(Nette\Caching\Storages\IJournal $journal = NULL)
+			public function __construct(Nette\Caching\Storages\IJournal $journal = NULL, ClientsPool $clients)
 			{
 				$this->journal = $journal;
+				$this->clients = $clients;
 			}
 
 
@@ -111,7 +125,28 @@ class StorageRouter extends RedisStorage
 					$this->result = $this->journal ? $this->journal->clean(...func_get_args()) : NULL;
 				}
 
+				return $this->client ? $this->getClientResult($this->client) : $this->result;
+			}
+
+
+			private function getClientResult(RedisClient $client)
+			{
+				if ($this->result && ! $this->clientsResult) {
+					foreach ((array) $this->result as $value) {
+						$this->clientsResult[spl_object_hash($this->clients->choose($value))][] = $value;
+					}
+				}
+				if ($this->clientsResult) {
+					return $this->clientsResult[spl_object_hash($client)] ?? [];
+				}
+
 				return $this->result;
+			}
+
+
+			public function setClient(RedisClient $client = NULL)
+			{
+				$this->client = $client;
 			}
 
 		};
