@@ -14,7 +14,6 @@ use Kdyby;
 use Nette;
 
 
-
 /**
  * @author Ondřej Nešpor
  * @author Filip Procházka <filip@prochazka.su>
@@ -49,7 +48,6 @@ class ExclusiveLock
 	public $acquireTimeout = FALSE;
 
 
-
 	/**
 	 * @param RedisClient $redisClient
 	 */
@@ -57,7 +55,6 @@ class ExclusiveLock
 	{
 		$this->client = $redisClient;
 	}
-
 
 
 	/**
@@ -69,15 +66,13 @@ class ExclusiveLock
 	}
 
 
-
 	/**
 	 * @return int
 	 */
 	public function calculateTimeout()
 	{
-		return time() + abs((int)$this->duration) + 1;
+		return time() + abs((int) $this->duration) + 1;
 	}
-
 
 
 	/**
@@ -100,7 +95,18 @@ class ExclusiveLock
 		do {
 			$sleepTime = 5000;
 			do {
-				if ($this->client->setNX($lockKey, $timeout = $this->calculateTimeout())) {
+				$timeout = $this->calculateTimeout();
+				if ($this->client->send(
+					'SET',
+					[
+						$lockKey,
+						$timeout,
+						[
+							RedisClient::EX => $this->duration,
+							RedisClient::NX,
+						],
+					]
+				)) {
 					$this->keys[$key] = $timeout;
 					return TRUE;
 				}
@@ -112,11 +118,12 @@ class ExclusiveLock
 				$lockExpiration = $this->client->get($lockKey);
 				$sleepTime += 2500;
 
-			} while (empty($lockExpiration) || ($lockExpiration >= time() && !usleep($sleepTime)));
+			} while (empty($lockExpiration) || ($lockExpiration >= time() && ! usleep($sleepTime)));
 
 			$oldExpiration = $this->client->getSet($lockKey, $timeout = $this->calculateTimeout());
 			if ($oldExpiration === $lockExpiration) {
 				$this->keys[$key] = $timeout;
+
 				return TRUE;
 			}
 
@@ -126,26 +133,26 @@ class ExclusiveLock
 	}
 
 
-
 	/**
 	 * @param string $key
 	 */
 	public function release($key)
 	{
-		if (!isset($this->keys[$key])) {
+		if ( ! isset($this->keys[$key])) {
 			return FALSE;
 		}
 
 		if ($this->keys[$key] <= time()) {
 			unset($this->keys[$key]);
+
 			return FALSE;
 		}
 
 		$this->client->del($this->formatLock($key));
 		unset($this->keys[$key]);
+
 		return TRUE;
 	}
-
 
 
 	/**
@@ -154,7 +161,7 @@ class ExclusiveLock
 	 */
 	public function increaseLockTimeout($key)
 	{
-		if (!isset($this->keys[$key])) {
+		if ( ! isset($this->keys[$key])) {
 			return FALSE;
 		}
 
@@ -163,13 +170,13 @@ class ExclusiveLock
 		}
 
 		$oldTimeout = $this->client->getSet($this->formatLock($key), $timeout = $this->calculateTimeout());
-		if ((int)$oldTimeout !== (int)$this->keys[$key]) {
+		if ((int) $oldTimeout !== (int) $this->keys[$key]) {
 			throw LockException::invalidDuration();
 		}
 		$this->keys[$key] = $timeout;
+
 		return TRUE;
 	}
-
 
 
 	/**
@@ -177,11 +184,10 @@ class ExclusiveLock
 	 */
 	public function releaseAll()
 	{
-		foreach ((array)$this->keys as $key => $timeout) {
+		foreach ((array) $this->keys as $key => $timeout) {
 			$this->release($key);
 		}
 	}
-
 
 
 	/**
@@ -195,20 +201,18 @@ class ExclusiveLock
 	}
 
 
-
 	/**
 	 * @param string $key
 	 * @return int
 	 */
 	public function getLockTimeout($key)
 	{
-		if (!isset($this->keys[$key])) {
+		if ( ! isset($this->keys[$key])) {
 			return 0;
 		}
 
 		return $this->keys[$key] - time();
 	}
-
 
 
 	/**
@@ -219,7 +223,6 @@ class ExclusiveLock
 	{
 		return $key . ':lock';
 	}
-
 
 
 	public function __destruct()
