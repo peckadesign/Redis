@@ -158,9 +158,22 @@ class RedisClient extends Nette\Object implements \ArrayAccess
 {
 
 	/** @deprecated */
-	const WITH_SCORES = 'WITHSCORES';
+	public const WITH_SCORES = 'WITHSCORES';
 
-	const DEFAULT_PORT = 6379;
+	public const DEFAULT_PORT = 6379;
+
+	/**
+	 * Set the specified expire time, in milliseconds.
+	 */
+	public const PX = 'PX';
+	/**
+	 * Set the specified expire time, in seconds.
+	 */
+	public const EX = 'EX';
+	/**
+	 * Option - Only set the key if it does not already exist.
+	 */
+	public const NX = 'NX';
 
 	/**
 	 * @var Driver\PhpRedisDriver
