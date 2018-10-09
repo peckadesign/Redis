@@ -1,8 +1,8 @@
 {
-	"name": "kdyby/redis",
+	"name": "pd/redis",
 	"type": "library",
 	"description": "Redis storage for Nette Framework",
-	"keywords": ["nette", "kdyby", "redis", "client", "cache"],
+	"keywords": ["nette", "kdyby", "redis", "client", "cache", "pd", "peckadesign"],
 	"homepage": "http://kdyby.org",
 	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
 	"authors": [
@@ -10,11 +10,18 @@
 			"name": "Filip Procházka",
 			"homepage": "http://filip-prochazka.com",
 			"email": "filip@prochazka.su"
+		},
+		{
+			"name": "PeckaDesign",
+			"homepage": "https://peckadesign.cz/"
+		},
+		{
+			"name": "Václav Čevela",
+			"homepage": "http://blog.spameri.cz"
 		}
 	],
 	"support": {
-		"email": "filip@prochazka.su",
-		"issues": "https://github.com/kdyby/redis/issues"
+		"issues": "https://github.com/peckadesign/redis/issues"
 	},
 	"require": {
 		"php": ">=7.1",
