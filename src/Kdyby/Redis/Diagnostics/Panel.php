@@ -26,7 +26,7 @@ class Panel extends Nette\Object implements IBarPanel
 {
 
 	/** @internal */
-	const TIMER_NAME = 'redis-client-timer';
+	public const TIMER_NAME = 'redis-client-timer';
 
 	/**
 	 * @var int
@@ -60,10 +60,7 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 
-	/**
-	 * @return int
-	 */
-	public function getQueryCount()
+	public function getQueryCount(): int
 	{
 		return count($this->queries);
 	}
@@ -73,14 +70,14 @@ class Panel extends Nette\Object implements IBarPanel
 	/**
 	 * @return int milliseconds
 	 */
-	public function getTotalTime()
+	public function getTotalTime(): int
 	{
 		return $this->totalTime * 1000;
 	}
 
 
 
-	public function begin($args, $dbIndex)
+	public function begin(array $args, int $dbIndex): void
 	{
 		if (!$this->renderPanel) {
 			$cmd = '';
@@ -107,10 +104,7 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 
-	/**
-	 * @param \Exception|\Throwable $e
-	 */
-	public function error($e)
+	public function error(\Throwable $e): void
 	{
 		$this->errors[] = $e;
 		if ($query = end($this->queries)) {
@@ -120,7 +114,7 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 
-	public function end()
+	public function end(): void
 	{
 		$time = Debugger::timer(self::TIMER_NAME);
 		if ($query = end($this->queries)) {
@@ -133,9 +127,8 @@ class Panel extends Nette\Object implements IBarPanel
 
 	/**
 	 * Renders HTML code for custom tab.
-	 * @return string
 	 */
-	public function getTab()
+	public function getTab(): string
 	{
 		return
 			'<style>
@@ -159,9 +152,8 @@ class Panel extends Nette\Object implements IBarPanel
 
 	/**
 	 * Renders HTML code for custom panel.
-	 * @return string
 	 */
-	public function getPanel()
+	public function getPanel(): string
 	{
 		if (!$this->renderPanel) {
 			return '';
@@ -188,15 +180,10 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 
-	/**
-	 * @param \Exception|RedisClientException $e
-	 *
-	 * @return array
-	 */
-	public static function renderException($e)
+	public static function renderException(RedisClientException $e): ?array
 	{
+		$panel = NULL;
 		if ($e instanceof RedisClientException) {
-			$panel = NULL;
 			if ($e->request) {
 				$panel .= '<h3>Redis Request</h3>' .
 					'<pre class="nette-dump"><span class="php-string">' .
@@ -217,17 +204,14 @@ class Panel extends Nette\Object implements IBarPanel
 					'panel' => $panel
 				];
 			}
-
-			return $panel;
 		}
+
+		return $panel;
 	}
 
 
 
-	/**
-	 * @return \Kdyby\Redis\Diagnostics\Panel
-	 */
-	public static function register()
+	public static function register(): \Kdyby\Redis\Diagnostics\Panel
 	{
 		self::getDebuggerBlueScreen()->addPanel([$panel = new static(), 'renderException']);
 		self::getDebuggerBar()->addPanel($panel);
@@ -236,20 +220,14 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 
-	/**
-	 * @return \Tracy\Bar
-	 */
-	private static function getDebuggerBar()
+	private static function getDebuggerBar(): \Tracy\Bar
 	{
 		return Debugger::getBar();
 	}
 
 
 
-	/**
-	 * @return \Tracy\BlueScreen
-	 */
-	private static function getDebuggerBlueScreen()
+	private static function getDebuggerBlueScreen(): \Tracy\BlueScreen
 	{
 		return Debugger::getBlueScreen();
 	}
