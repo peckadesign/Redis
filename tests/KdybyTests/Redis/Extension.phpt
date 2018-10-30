@@ -4,6 +4,7 @@
  * Test: Kdyby\Redis\Extension.
  *
  * @testCase KdybyTests\Redis\ExtensionTest
+ * @skip
  * @author Filip Procházka <filip@prochazka.su>
  * @package Kdyby\Redis
  */
