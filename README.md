@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/peckadesign/Redis.svg?branch=master)](https://travis-ci.org/peckadesign/Redis)
+[![Build Status](https://travis-ci.com/peckadesign/Redis.svg?branch=master)](https://travis-ci.com/peckadesign/Redis)
 [![Downloads this Month](https://img.shields.io/packagist/dm/kdyby/redis.svg)](https://packagist.org/packages/pd/Redis)
 
 Pd/Redis
@@ -37,3 +37,4 @@ Learn more in the [documentation](https://github.com/Peckadesign/Redis/blob/mast
 -----
 
 Homepage [http://www.kdyby.org](http://www.kdyby.org) and repository [http://github.com/Peckadesign/Redis](http://github.com/Peckadesign/Redis).
+
