@@ -12,7 +12,7 @@ This extension is here to provide cache storage service, using [Redis](http://re
 You can install the extension using this command
 
 ```sh
-$ composer require kdyby/redis
+$ composer require pd/redis
 ```
 
 and enable the extension using your neon config.
