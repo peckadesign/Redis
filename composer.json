@@ -68,10 +68,5 @@
 	},
 	"autoload-dev": {
 		"classmap": ["tests/KdybyTests/Redis"]
-	},
-	"extra": {
-		"branch-alias": {
-			"dev-master": "3.3-dev"
-		}
 	}
 }

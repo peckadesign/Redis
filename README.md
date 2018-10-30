@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/Peckadesign/Redis.svg?branch=master)](https://travis-ci.org/Peckadesign/Redis)
-[![Downloads this Month](https://img.shields.io/packagist/dm/kdyby/redis.svg)](https://packagist.org/packages/Peckadesign/Redis)
+[![Build Status](https://travis-ci.org/peckadesign/Redis.svg?branch=master)](https://travis-ci.org/peckadesign/Redis)
+[![Downloads this Month](https://img.shields.io/packagist/dm/kdyby/redis.svg)](https://packagist.org/packages/pd/Redis)
 
 Pd/Redis
 ======
@@ -9,7 +9,7 @@ This is forked version of Kdyby/Redis with specific modification see [Releases f
 Requirements
 ------------
 
-Pd/Redis requires PHP 5.4 or higher.
+Pd/Redis requires PHP 7.1 or higher.
 
 - [Nette Framework](https://github.com/nette/nette)
 - [Redis database](http://redis.io)
