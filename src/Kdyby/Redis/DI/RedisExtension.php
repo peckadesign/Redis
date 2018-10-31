@@ -86,7 +86,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 
 
 
-	protected function buildClient(string $name, array $config): \Nette\DI\ServiceDefinition
+	protected function buildClient(?string $name, array $config): \Nette\DI\ServiceDefinition
 	{
 		$builder = $this->getContainerBuilder();
 
