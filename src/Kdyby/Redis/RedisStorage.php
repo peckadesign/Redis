@@ -50,7 +50,7 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 	private $client;
 
 	/**
-	 * @var \Nette\Caching\Storages\IJournal
+	 * @var \Nette\Caching\Storages\IJournal|\Kdyby\Redis\RedisJournal
 	 */
 	private $journal;
 
@@ -230,6 +230,14 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 			if (!$this->journal) {
 				throw new Nette\InvalidStateException('CacheJournal has not been provided.');
 			}
+
+			$this->journal->lock($cacheKey);
+			if (isset($dp[Cache::TAGS])) {
+				foreach ($dp[Cache::TAGS] as $tag) {
+					$this->journal->lock($tag);
+				}
+			}
+
 			$this->journal->write($cacheKey, $dp);
 		}
 
@@ -249,6 +257,13 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 			}
 
 			$this->unlock($key);
+
+			$this->journal->unlock($cacheKey);
+			if (isset($dp[Cache::TAGS])) {
+				foreach ($dp[Cache::TAGS] as $tag) {
+					$this->journal->unlock($tag);
+				}
+			}
 
 		} catch (RedisClientException $e) {
 			$this->remove($key);

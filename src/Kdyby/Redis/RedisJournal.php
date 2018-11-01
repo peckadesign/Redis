@@ -187,9 +187,21 @@ class RedisJournal extends Nette\Object implements Nette\Caching\Storages\IJourn
 	 *
 	 * @return string
 	 */
-	protected function formatKey($key, $suffix = NULL)
+	public function formatKey($key, $suffix = NULL): string
 	{
 		return $this->cacheKey . ':' . $key . ($suffix ? ':' . $suffix : NULL);
+	}
+
+
+	public function lock(string $key): void
+	{
+		$this->client->lock($this->formatKey($key));
+	}
+
+
+	public function unlock(string $key): void
+	{
+		$this->client->unlock($this->formatKey($key));
 	}
 
 }
