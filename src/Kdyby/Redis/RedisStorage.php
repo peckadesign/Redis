@@ -16,7 +16,6 @@ use Nette\Caching\Cache;
 use Nette\Caching\Storages\IJournal;
 
 
-
 /**
  * Redis Storage.
  *
@@ -225,12 +224,9 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 		}
 
 		$cacheKey = $this->formatEntryKey($key);
-
-		if (isset($dp[Cache::TAGS]) || isset($dp[Cache::PRIORITY])) {
-			if (!$this->journal) {
-				throw new Nette\InvalidStateException('CacheJournal has not been provided.');
-			}
-			$this->journal->write($cacheKey, $dp);
+		$useJournal = isset($dp[Cache::TAGS]) || isset($dp[Cache::PRIORITY]);
+		if ($useJournal && !$this->journal) { // fail early
+			throw new Nette\InvalidStateException('CacheJournal has not been provided.');
 		}
 
 		if (!is_string($data) || $data === NULL) {
@@ -253,6 +249,15 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 		} catch (RedisClientException $e) {
 			$this->remove($key);
 			throw new Nette\InvalidStateException($e->getMessage(), $e->getCode(), $e);
+		}
+
+		if ($useJournal) {
+			try {
+				$this->journal->write($cacheKey, $dp);
+			} catch (\Throwable $e) {
+				$this->remove($key);
+				throw $e;
+			}
 		}
 	}
 
@@ -385,8 +390,18 @@ class RedisStorage extends Nette\Object implements IMultiReadStorage
 		if (empty($stored[0][self::META_SERIALIZED])) {
 			return $stored[1];
 
-		} else {
-			return @unserialize($stored[1]); // intentionally @
+		}
+		try {
+			$value = @unserialize($stored[1]); // intentionally @
+			if ($value === FALSE && $stored[1] !== serialize(FALSE)) {
+				return NULL;
+			}
+
+			return $value;
+		} catch (\Throwable $e) {
+			return NULL;
+		} catch (\Exception $e) {
+			return NULL;
 		}
 	}
 
